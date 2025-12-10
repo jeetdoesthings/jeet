@@ -13,14 +13,14 @@ let lastSpawned = null;
 let lastImageIndex = -1; // track which image was used last
 
 // Core spawn logic extracted
-function spawnPhoto(x, y) {
+function spawnPhoto(x, y, force = false) {
   if (!window.isHomeActive) return;
 
   const dx = x - lastX;
   const dy = y - lastY;
   const distance = Math.sqrt(dx * dx + dy * dy);
 
-  if (distance < minDistance) return;
+  if (!force && distance < minDistance) return;
 
   lastX = x;
   lastY = y;
@@ -69,11 +69,15 @@ document.addEventListener('mousemove', (e) => {
 });
 
 // Touch Interaction (Mobile)
-document.addEventListener('touchmove', (e) => {
-  // Prevent default to stop swipe-nav or scrolling if necessary, 
-  // though body is overflow hidden.
-  // e.preventDefault(); 
+document.addEventListener('touchstart', (e) => {
+  // Spawn immediately on touch start
+  const touch = e.touches[0];
+  lastX = touch.pageX; // Reset position to avoid jump
+  lastY = touch.pageY;
+  spawnPhoto(touch.pageX, touch.pageY, true); // Force spawn
+}, { passive: true });
 
+document.addEventListener('touchmove', (e) => {
   const touch = e.touches[0];
   spawnPhoto(touch.pageX, touch.pageY);
 }, { passive: true });
