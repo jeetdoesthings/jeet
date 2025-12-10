@@ -45,8 +45,8 @@ function spawnPhoto(x, y, force = false) {
 
   img.onload = () => {
     const isMobile = window.innerWidth < 900;
-    // Increased sizes as requested
-    const baseScale = isMobile ? 1.0 : 0.6;
+    // Increased sizes as requested, but dialed back from 1.0
+    const baseScale = isMobile ? 0.6 : 0.6;
     const randomFactor = isMobile ? 0.3 : 0.4;
     const targetScale = baseScale + Math.random() * randomFactor;
 
@@ -283,11 +283,11 @@ setInterval(() => {
     if (activePlayer === v2) swapVideo();
   });
 
-  // Error handling: if active player errors, try to swap immediately
-  const handleError = () => {
+  // Error handling: log but don't skip immediately (prevents premature cutoffs on buffering)
+  const handleError = (e) => {
     if (activePlayer === v1 || activePlayer === v2) {
-      console.warn("Error in active player, skipping...");
-      swapVideo();
+      console.warn("Error in active player (buffering or network):", e);
+      // swapVideo(); // DISABLED: causing premature skips
     }
   };
   v1.addEventListener('error', handleError);

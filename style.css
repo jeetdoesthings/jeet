@@ -68,9 +68,6 @@ html {
   z-index: -1;
   overflow: hidden;
   background-color: #000;
-  background-image: url('media/poster.jpg');
-  background-size: cover;
-  background-position: center;
 }
 
 /* Common Video Styles */
