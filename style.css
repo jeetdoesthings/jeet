@@ -1,0 +1,397 @@
+/* Modern Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --font-heading: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --color-text: #ffffff;
+  --color-bg-overlay: rgba(0, 0, 0, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: 10px;
+}
+
+body,
+html {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: transparent;
+  /* Fallback handled by poster or separate element if needed */
+}
+
+/* SPA Views */
+.view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease;
+  z-index: 10;
+  /* Base z-index for views */
+}
+
+.view.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 20;
+  /* Active view on top */
+}
+
+.view.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#about-view.active {
+  overflow-y: auto;
+  /* Allow scrolling in about view */
+}
+
+/* Background Video */
+/* Background Video Container */
+#video-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Common Video Styles */
+.bg-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  /* Hidden by default */
+  z-index: 0;
+}
+
+.bg-video.active {
+  opacity: 1;
+  /* Visible */
+  /* z-index is managed by JS for crossfading */
+}
+
+/* Remove .blurred class entirely or leave empty if needed for JS safety, but better to remove */
+
+/* Overlay to ensure text readability */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg-overlay);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Header */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 2rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  /* Ensure it's above everything */
+  mix-blend-mode: normal;
+  /* Remove difference mode for better visibility */
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: white;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+  /* Strong shadow for contrast */
+}
+
+/* Glassmorphic Button (Refined) */
+#about-btn {
+  background: rgba(255, 255, 255, 0.1);
+  /* Subtle glass */
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  /* Crisp refined border */
+  color: white;
+  padding: 0.7rem 1.5rem;
+  /* Slightly smaller than original 0.8 / 1.5 */
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  /* Refined text size */
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  /* More subtle shadow */
+}
+
+#about-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  /* Gentle lift */
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Play Button Overlay */
+#bg-play-btn {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1500;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  color: white;
+  border: 1px solid var(--glass-border);
+  padding: 1rem 2rem;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#bg-play-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Photo Container */
+#photo-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Photos */
+.photo {
+  position: absolute;
+  max-width: 25vw;
+  max-height: 40vh;
+  object-fit: cover;
+  border-radius: 4px;
+  /* Slight rounding */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  /* Start hidden, JS handles fade in */
+  transform: translate(-50%, -50%) scale(0.8);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+/* Active state for photos (handled by JS usually, but here for reference) */
+.photo.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* --- About Page Styles --- */
+
+.about-page {
+  background-color: transparent;
+  /* Allow video to show through */
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  color: #fff;
+}
+
+/* Background Photo Layer */
+.about-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('media/poster.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.2;
+  z-index: 0;
+  filter: blur(20px);
+}
+
+/* Ensure content is above bg */
+.about-page header,
+.about-container,
+.contact-footer-fixed {
+  position: relative;
+  z-index: 1;
+}
+
+.logo-link {
+  text-decoration: none;
+  z-index: 1001;
+  cursor: pointer;
+}
+
+/* Container for split layout */
+.about-container {
+  min-height: 100vh;
+  display: flex;
+  padding: 0;
+  /* Full bleed */
+  box-sizing: border-box;
+}
+
+.about-split {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Left side: Sticky/Fixed Image */
+.about-image {
+  flex: 1;
+  width: 50%;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.about-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  /* Sharp edges for split look */
+  box-shadow: none;
+}
+
+/* Right side: Scrolling Text */
+.about-text {
+  flex: 1;
+  width: 50%;
+  padding: 120px 5vw 100px;
+  /* Top padding for logo clearance, bottom for footer */
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  /* Removed heavy backdrop-filter to rely on video blur for smoothness,
+     keeping light bg for legibility */
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  /* reduced from 10px for performance */
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 12px;
+  /* Subtle rounding */
+}
+
+.about-section h2 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.about-section h3 {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: #ccc;
+  border-bottom: none;
+}
+
+.about-section p {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #ddd;
+  margin: 0;
+}
+
+.text-link {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.text-link:hover {
+  color: #aaa;
+}
+
+/* Fixed Footer at bottom of right side or viewport */
+.contact-footer-fixed {
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 100;
+}
+
+.copyright {
+  position: fixed;
+  bottom: 20px;
+  left: 30px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Hide copyright if it overlaps with image too much or just put text in right col?
+   Actually, reference has copyright left, icons right. 
+   Since left is image, copyright might be hard to see. 
+   Changes: let's put copyright in right col bottom or fix relative to viewport.
+   Fixed to viewport works if z-index is high.
+*/
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icons a {
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.3s;
+}
+
+.social-icons a:hover {
+  color: #fff;
+}
