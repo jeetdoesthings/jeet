@@ -38,10 +38,19 @@ function spawnPhoto(x, y, force = false) {
   img.classList.add('photo');
 
   img.onload = () => {
-    const scale = 0.3 + Math.random() * 0.3; // Slightly smaller for elegance
+    const isMobile = window.innerWidth < 900;
+    const baseScale = isMobile ? 0.8 : 0.3; // Much larger on mobile
+    const randomFactor = isMobile ? 0.4 : 0.3;
+    const scale = baseScale + Math.random() * randomFactor;
 
-    img.style.width = `${img.naturalWidth * scale}px`;
-    img.style.height = 'auto'; // Maintain aspect ratio checking constraints
+    // On mobile, rely more on CSS max-width, but this sets a base 'natural' size
+    if (isMobile) {
+      // Force width to be substantial but respect CSS max-width 95vw
+      img.style.width = `${Math.min(img.naturalWidth * scale, window.innerWidth * 0.9)}px`;
+    } else {
+      img.style.width = `${img.naturalWidth * scale}px`;
+    }
+    img.style.height = 'auto';
 
     img.style.left = `${x}px`;
     img.style.top = `${y}px`;
@@ -90,7 +99,7 @@ setInterval(() => {
     photos.forEach((img) => {
       if (img !== lastSpawned) {
         img.style.opacity = '0';
-        setTimeout(() => img.remove(), 400);
+        setTimeout(() => img.remove(), 400); // reduced removal time
       }
     });
   }
@@ -128,43 +137,6 @@ setInterval(() => {
   };
 
   window.isHomeActive = true;
-
-  const videoSources = [
-    'media/bg1.mp4',
-    'media/bg2.mp4',
-    'media/bg3.mp4',
-    'media/bg4.mp4',
-    'media/bg5.mp4',
-    'media/bg6.mp4',
-    'media/bg7.mp4',
-    'media/bg8.mp4',
-    'media/bg9.mp4',
-    'media/bg10.mp4'
-  ];
-
-  let playlist = [];
-  let currentVideoIndex = -1; // Not strictly used if we shuffle, but helpful for tracking
-
-  function shuffle(array) {
-    let currentIndex = array.length, randomIndex;
-    while (currentIndex != 0) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
-      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-    }
-    return array;
-  }
-
-  // Get next source from shuffled playlist
-  function getNextSource() {
-    if (playlist.length === 0) {
-      playlist = videoSources.map((_, i) => videoSources[i]);
-      playlist = shuffle(playlist);
-      // Avoid repeat logic omitted for simplicity in double buffer, 
-      // or check against current playing src.
-    }
-    return playlist.shift();
-  }
 
   const v1 = document.getElementById('bg-video-1');
   const v2 = document.getElementById('bg-video-2');
