@@ -162,29 +162,7 @@ header {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
-/* Play Button Overlay */
-#bg-play-btn {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1500;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  color: white;
-  border: 1px solid var(--glass-border);
-  padding: 1rem 2rem;
-  border-radius: 100px;
-  font-family: var(--font-body);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
 
-#bg-play-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
 
 /* Photo Container */
 #photo-container {

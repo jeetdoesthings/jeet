@@ -215,31 +215,6 @@ setInterval(() => {
 
 
   // Play button handler (global fallback)
-  let playBtn = document.getElementById('bg-play-btn');
-  if (!playBtn) {
-    playBtn = document.createElement('button');
-    playBtn.id = 'bg-play-btn';
-    playBtn.innerText = 'Play background video';
-    playBtn.style.display = 'none';
-    document.body.appendChild(playBtn);
-  }
-
-  function showPlay() {
-    playBtn.style.display = 'block';
-  }
-  function hidePlay() {
-    playBtn.style.display = 'none';
-  }
-
-  playBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    activePlayer.play().then(() => {
-      hidePlay();
-      prepareNextVideo();
-    }).catch(e => console.error(e));
-  });
-
-  // Hide button if playing
   v1.addEventListener('playing', hidePlay);
   v2.addEventListener('playing', hidePlay);
 
