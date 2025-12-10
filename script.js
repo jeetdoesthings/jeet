@@ -68,72 +68,15 @@ document.addEventListener('mousemove', (e) => {
   spawnPhoto(e.pageX, e.pageY);
 });
 
-// Gyroscope Interaction
-const cursor = document.getElementById('liquid-cursor');
-let px = window.innerWidth / 2;
-let py = window.innerHeight / 2;
-let vx = 0;
-let vy = 0;
+// Touch Interaction (Mobile)
+document.addEventListener('touchmove', (e) => {
+  // Prevent default to stop swipe-nav or scrolling if necessary, 
+  // though body is overflow hidden.
+  // e.preventDefault(); 
 
-function handleOrientation(event) {
-  if (!cursor) return;
-
-  // Beta is front-back tilt (-180 to 180). Rest is ~0 flat, ~45 holding phone.
-  // Gamma is left-right tilt (-90 to 90).
-  // We want velocity based on tilt.
-
-  const tiltX = event.gamma; // Left/Right
-  const tiltY = event.beta;  // Front/Back
-
-  // Normalize tilt to velocity (deadzone +- 2)
-  if (Math.abs(tiltX) > 2) vx += tiltX * 0.05;
-  if (Math.abs(tiltY - 45) > 2) vy += (tiltY - 45) * 0.05; // Assume 45deg holding angle bias
-
-  // Friction
-  vx *= 0.9;
-  vy *= 0.9;
-
-  // Update position
-  px += vx;
-  py += vy;
-
-  // Bounds check wrap-around or bounce? Let's buffer.
-  if (px < 0) { px = 0; vx *= -0.5; }
-  if (px > window.innerWidth) { px = window.innerWidth; vx *= -0.5; }
-  if (py < 0) { py = 0; vy *= -0.5; }
-  if (py > window.innerHeight) { py = window.innerHeight; vy *= -0.5; }
-
-  // Visual update
-  cursor.style.display = 'block'; // Show if we get data
-  cursor.style.transform = `translate(-50%, -50%) translate(${px}px, ${py}px)`;
-
-  // Logically spawn photo
-  spawnPhoto(px, py);
-}
-
-// iOS Permission Request helper (hidden until user taps something)
-// We'll hook this into the first touch or existing Play button if possible
-const requestGyro = async () => {
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-    typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try {
-      const permission = await DeviceOrientationEvent.requestPermission();
-      if (permission === 'granted') {
-        window.addEventListener('deviceorientation', handleOrientation);
-      }
-    } catch (e) {
-      console.warn(e);
-    }
-  } else {
-    // Non-iOS 13+ devices
-    window.addEventListener('deviceorientation', handleOrientation);
-  }
-};
-
-// Hook permission into a user gesture. 
-// Since we don't have a dedicated button, let's use document click/touch once on Home.
-document.addEventListener('click', requestGyro, { once: true });
-document.addEventListener('touchstart', requestGyro, { once: true });
+  const touch = e.touches[0];
+  spawnPhoto(touch.pageX, touch.pageY);
+}, { passive: true });
 
 
 setInterval(() => {
