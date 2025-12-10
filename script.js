@@ -143,10 +143,13 @@ setInterval(() => {
   const v1Check = document.getElementById('bg-video-1');
   if (!v1Check) return;
 
-  /* SPA Logic */
+  // SPA Logic
+  window.isHomeActive = true; // Default state
+
   window.showView = function (viewName) {
     const homeView = document.getElementById('home-view');
     const aboutView = document.getElementById('about-view');
+    const aboutBtn = document.getElementById('about-btn');
 
     if (viewName === 'home') {
       homeView.classList.remove('hidden');
@@ -154,14 +157,29 @@ setInterval(() => {
       aboutView.classList.remove('active');
       aboutView.classList.add('hidden');
       window.isHomeActive = true;
+      if (aboutBtn) aboutBtn.classList.remove('active');
     } else if (viewName === 'about') {
       aboutView.classList.remove('hidden');
       aboutView.classList.add('active');
       homeView.classList.remove('active');
       homeView.classList.add('hidden');
       window.isHomeActive = false;
+      if (aboutBtn) aboutBtn.classList.add('active');
     }
   };
+
+  // Toggle Logic for About Button
+  const aboutBtn = document.getElementById('about-btn');
+  if (aboutBtn) {
+    aboutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.isHomeActive) {
+        showView('about');
+      } else {
+        showView('home');
+      }
+    });
+  }
 
   window.isHomeActive = true;
 
