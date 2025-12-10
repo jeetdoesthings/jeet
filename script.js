@@ -45,9 +45,9 @@ function spawnPhoto(x, y, force = false) {
 
   img.onload = () => {
     const isMobile = window.innerWidth < 900;
-    // Reduced sizes as requested (0.6 -> 0.45)
-    const baseScale = isMobile ? 0.45 : 0.6;
-    const randomFactor = isMobile ? 0.3 : 0.4;
+    // Reduced sizes further as requested (0.45 -> 0.35)
+    const baseScale = isMobile ? 0.35 : 0.6;
+    const randomFactor = isMobile ? 0.2 : 0.4;
     const targetScale = baseScale + Math.random() * randomFactor;
 
     // Calculate natural dimensions
