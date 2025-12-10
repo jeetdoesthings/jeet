@@ -43,64 +43,65 @@ function spawnPhoto(x, y, force = false) {
   img.src = images[index];
   img.classList.add('photo');
 
-  const isMobile = window.innerWidth < 900;
-  // Increased sizes as requested
-  const baseScale = isMobile ? 1.0 : 0.6;
-  const randomFactor = isMobile ? 0.3 : 0.4;
-  const targetScale = baseScale + Math.random() * randomFactor;
+  img.onload = () => {
+    const isMobile = window.innerWidth < 900;
+    // Increased sizes as requested
+    const baseScale = isMobile ? 1.0 : 0.6;
+    const randomFactor = isMobile ? 0.3 : 0.4;
+    const targetScale = baseScale + Math.random() * randomFactor;
 
-  // Calculate natural dimensions
-  const nw = img.naturalWidth;
-  const nh = img.naturalHeight;
-  const ratio = nw / nh;
+    // Calculate natural dimensions
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    const ratio = nw / nh;
 
-  // Define constraints
-  const maxW = isMobile ? window.innerWidth * 0.95 : window.innerWidth * 0.4;
-  const maxH = isMobile ? window.innerHeight * 0.80 : window.innerHeight * 0.6;
+    // Define constraints
+    const maxW = isMobile ? window.innerWidth * 0.95 : window.innerWidth * 0.4;
+    const maxH = isMobile ? window.innerHeight * 0.80 : window.innerHeight * 0.6;
 
-  // Calculate desired dimensions based on scale
-  let w = nw * targetScale;
-  let h = nh * targetScale;
+    // Calculate desired dimensions based on scale
+    let w = nw * targetScale;
+    let h = nh * targetScale;
 
-  // Constrain width
-  if (w > maxW) {
-    w = maxW;
-    h = w / ratio;
-  }
+    // Constrain width
+    if (w > maxW) {
+      w = maxW;
+      h = w / ratio;
+    }
 
-  // Constrain height (check again to ensure we don't exceed height after width adjust)
-  if (h > maxH) {
-    h = maxH;
-    w = h * ratio;
-  }
+    // Constrain height (check again to ensure we don't exceed height after width adjust)
+    if (h > maxH) {
+      h = maxH;
+      w = h * ratio;
+    }
 
-  // Apply final dimensions
-  img.style.width = `${w}px`;
-  img.style.height = `${h}px`;
-  // Explicitly override any CSS max constraints to prevent conflicts, 
-  // since we already calculated safe bounds.
-  img.style.maxWidth = 'none';
-  img.style.maxHeight = 'none';
+    // Apply final dimensions
+    img.style.width = `${w}px`;
+    img.style.height = `${h}px`;
+    // Explicitly override any CSS max constraints to prevent conflicts,
+    // since we already calculated safe bounds.
+    img.style.maxWidth = 'none';
+    img.style.maxHeight = 'none';
 
-  img.style.left = `${x}px`;
-  img.style.top = `${y}px`;
+    img.style.left = `${x}px`;
+    img.style.top = `${y}px`;
 
-  // Initial state for transition
-  img.style.transform = `translate(-50%, -50%) scale(0.8)`;
-  img.style.opacity = '0';
-  img.style.zIndex = Date.now();
+    // Initial state for transition
+    img.style.transform = `translate(-50%, -50%) scale(0.8)`;
+    img.style.opacity = '0';
+    img.style.zIndex = Date.now();
 
-  photoContainer.appendChild(img);
-  lastSpawned = img;
+    photoContainer.appendChild(img);
+    lastSpawned = img;
 
-  // Trigger reflow to enable transition
-  requestAnimationFrame(() => {
-    img.classList.add('visible');
-    img.style.transform = `translate(-50%, -50%) scale(1)`;
-    img.style.opacity = '1';
-  });
+    // Trigger reflow to enable transition
+    requestAnimationFrame(() => {
+      img.classList.add('visible');
+      img.style.transform = `translate(-50%, -50%) scale(1)`;
+      img.style.opacity = '1';
+    });
+  };
 };
-}
 
 // Mouse Interaction
 document.addEventListener('mousemove', (e) => {
@@ -169,9 +170,9 @@ setInterval(() => {
     'media/bg2.mp4',
     'media/bg3.mp4',
     'media/bg4.mp4',
-    'media/bg5.mov',
+    'media/bg5.mp4',
     'media/bg6.mp4',
-    'media/bg7.mov',
+    'media/bg7.mp4',
     'media/bg8.mp4',
     'media/bg9.mp4',
     'media/bg10.mp4'
