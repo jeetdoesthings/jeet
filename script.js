@@ -43,39 +43,63 @@ function spawnPhoto(x, y, force = false) {
   img.src = images[index];
   img.classList.add('photo');
 
-  img.onload = () => {
-    const isMobile = window.innerWidth < 900;
-    // Increased sizes as requested
-    const baseScale = isMobile ? 1.0 : 0.6;
-    const randomFactor = isMobile ? 0.3 : 0.4;
-    const scale = baseScale + Math.random() * randomFactor;
+  const isMobile = window.innerWidth < 900;
+  // Increased sizes as requested
+  const baseScale = isMobile ? 1.0 : 0.6;
+  const randomFactor = isMobile ? 0.3 : 0.4;
+  const targetScale = baseScale + Math.random() * randomFactor;
 
-    if (isMobile) {
-      // Allow nearly full width on mobile
-      img.style.width = `${Math.min(img.naturalWidth * scale, window.innerWidth * 0.98)}px`;
-    } else {
-      img.style.width = `${img.naturalWidth * scale}px`;
-    }
-    img.style.height = 'auto'; // Maintain aspect ratio
+  // Calculate natural dimensions
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  const ratio = nw / nh;
 
-    img.style.left = `${x}px`;
-    img.style.top = `${y}px`;
+  // Define constraints
+  const maxW = isMobile ? window.innerWidth * 0.95 : window.innerWidth * 0.4;
+  const maxH = isMobile ? window.innerHeight * 0.80 : window.innerHeight * 0.6;
 
-    // Initial state for transition
-    img.style.transform = `translate(-50%, -50%) scale(0.8)`;
-    img.style.opacity = '0';
-    img.style.zIndex = Date.now();
+  // Calculate desired dimensions based on scale
+  let w = nw * targetScale;
+  let h = nh * targetScale;
 
-    photoContainer.appendChild(img);
-    lastSpawned = img;
+  // Constrain width
+  if (w > maxW) {
+    w = maxW;
+    h = w / ratio;
+  }
 
-    // Trigger reflow to enable transition
-    requestAnimationFrame(() => {
-      img.classList.add('visible');
-      img.style.transform = `translate(-50%, -50%) scale(1)`;
-      img.style.opacity = '1';
-    });
-  };
+  // Constrain height (check again to ensure we don't exceed height after width adjust)
+  if (h > maxH) {
+    h = maxH;
+    w = h * ratio;
+  }
+
+  // Apply final dimensions
+  img.style.width = `${w}px`;
+  img.style.height = `${h}px`;
+  // Explicitly override any CSS max constraints to prevent conflicts, 
+  // since we already calculated safe bounds.
+  img.style.maxWidth = 'none';
+  img.style.maxHeight = 'none';
+
+  img.style.left = `${x}px`;
+  img.style.top = `${y}px`;
+
+  // Initial state for transition
+  img.style.transform = `translate(-50%, -50%) scale(0.8)`;
+  img.style.opacity = '0';
+  img.style.zIndex = Date.now();
+
+  photoContainer.appendChild(img);
+  lastSpawned = img;
+
+  // Trigger reflow to enable transition
+  requestAnimationFrame(() => {
+    img.classList.add('visible');
+    img.style.transform = `translate(-50%, -50%) scale(1)`;
+    img.style.opacity = '1';
+  });
+};
 }
 
 // Mouse Interaction
