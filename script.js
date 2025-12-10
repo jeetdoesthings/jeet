@@ -145,9 +145,9 @@ setInterval(() => {
     'media/bg2.mp4',
     'media/bg3.mp4',
     'media/bg4.mp4',
-    'media/bg5.mp4',
+    'media/bg5.mov',
     'media/bg6.mp4',
-    'media/bg7.mp4',
+    'media/bg7.mov',
     'media/bg8.mp4',
     'media/bg9.mp4',
     'media/bg10.mp4'
@@ -177,27 +177,41 @@ setInterval(() => {
   // Note: We use the current index for the start, then increment for next.
   activePlayer.src = videoSources[currentVideoIndex];
 
-  // Try to play active immediately
-  activePlayer.play().then(() => {
-    // It played! Make it visible.
-    makeVisible(activePlayer);
-    prepareNextVideo();
-  }).catch(err => {
-    console.warn("Autoplay failed, waiting for interaction", err);
-    // It failed. Do NOT make visible yet.
+  // PARANOID ANDROID (and iOS): Enforce muted usage for autoplay
+  activePlayer.muted = true;
+  activePlayer.defaultMuted = true;
+  activePlayer.playsInline = true;
+  activePlayer.setAttribute('playsinline', ''); // Explicit attribute
+  activePlayer.setAttribute('muted', '');
 
-    // Silent fallback: start on first touch/click
-    const startOnInteraction = () => {
-      activePlayer.play().then(() => {
-        makeVisible(activePlayer);
-        prepareNextVideo();
-      });
-      document.removeEventListener('click', startOnInteraction);
-      document.removeEventListener('touchstart', startOnInteraction);
-    };
-    document.addEventListener('click', startOnInteraction);
-    document.addEventListener('touchstart', startOnInteraction);
-  });
+  activePlayer.load(); // Ensure source is latched
+
+  // Try to play active immediately
+  const playPromise = activePlayer.play();
+
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      // It played! Make it visible.
+      makeVisible(activePlayer);
+      prepareNextVideo();
+    }).catch(err => {
+      console.warn("Autoplay failed, waiting for interaction", err);
+      // It failed. Do NOT make visible yet.
+
+      // Silent fallback: start on first touch/click
+      const startOnInteraction = () => {
+        activePlayer.muted = true; // Ensure muted again
+        activePlayer.play().then(() => {
+          makeVisible(activePlayer);
+          prepareNextVideo();
+        });
+        document.removeEventListener('click', startOnInteraction);
+        document.removeEventListener('touchstart', startOnInteraction);
+      };
+      document.addEventListener('click', startOnInteraction);
+      document.addEventListener('touchstart', startOnInteraction);
+    });
+  }
 
   function prepareNextVideo() {
     const nextSrc = getNextSource();
