@@ -170,9 +170,17 @@ setInterval(() => {
     // Preload next
     prepareNextVideo();
   }).catch(err => {
-    console.warn("Autoplay failed", err);
-    // Show play button logic if strictly needed, or just try again
-    showPlay();
+    console.warn("Autoplay failed, waiting for interaction", err);
+    // Silent fallback: start on first touch/click
+    const startOnInteraction = () => {
+      activePlayer.play().then(() => {
+        prepareNextVideo();
+      });
+      document.removeEventListener('click', startOnInteraction);
+      document.removeEventListener('touchstart', startOnInteraction);
+    };
+    document.addEventListener('click', startOnInteraction);
+    document.addEventListener('touchstart', startOnInteraction);
   });
 
   function prepareNextVideo() {
@@ -229,10 +237,5 @@ setInterval(() => {
   };
   v1.addEventListener('error', handleError);
   v2.addEventListener('error', handleError);
-
-
-  // Play button handler (global fallback)
-  v1.addEventListener('playing', hidePlay);
-  v2.addEventListener('playing', hidePlay);
 
 })();
