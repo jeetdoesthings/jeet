@@ -45,8 +45,8 @@ function spawnPhoto(x, y, force = false) {
 
   img.onload = () => {
     const isMobile = window.innerWidth < 900;
-    // Increased sizes as requested, but dialed back from 1.0
-    const baseScale = isMobile ? 0.6 : 0.6;
+    // Reduced sizes as requested (0.6 -> 0.45)
+    const baseScale = isMobile ? 0.45 : 0.6;
     const randomFactor = isMobile ? 0.3 : 0.4;
     const targetScale = baseScale + Math.random() * randomFactor;
 
