@@ -117,10 +117,6 @@ setInterval(() => {
     const homeView = document.getElementById('home-view');
     const aboutView = document.getElementById('about-view');
 
-    // We no longer toggle blur on a single IDs, as we have two videos.
-    // Ideally we apply blur to the container or both videos if needed.
-    // But user requested REMOVAL of blur so we don't need to add it back.
-
     if (viewName === 'home') {
       homeView.classList.remove('hidden');
       homeView.classList.add('active');
@@ -138,15 +134,36 @@ setInterval(() => {
 
   window.isHomeActive = true;
 
+  const videoSources = [
+    'media/bg1.mp4',
+    'media/bg2.mp4',
+    'media/bg3.mp4',
+    'media/bg4.mp4',
+    'media/bg5.mp4',
+    'media/bg6.mp4',
+    'media/bg7.mp4',
+    'media/bg8.mp4',
+    'media/bg9.mp4',
+    'media/bg10.mp4'
+  ];
+
+  // Random start index
+  let currentVideoIndex = Math.floor(Math.random() * videoSources.length);
+
+  function getNextSource() {
+    currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
+    return videoSources[currentVideoIndex];
+  }
+
   const v1 = document.getElementById('bg-video-1');
   const v2 = document.getElementById('bg-video-2');
   let activePlayer = v1;
   let nextPlayer = v2;
 
   // Initialize
-  // Pick random start
-  const startSrc = getNextSource();
-  activePlayer.src = startSrc;
+  // Set the ACTIVE player to the random start video immediately
+  // Note: We use the current index for the start, then increment for next.
+  activePlayer.src = videoSources[currentVideoIndex];
 
   // Try to play active immediately
   activePlayer.play().then(() => {
