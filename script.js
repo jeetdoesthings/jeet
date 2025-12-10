@@ -12,6 +12,12 @@ let lastMoveTime = Date.now();
 let lastSpawned = null;
 let lastImageIndex = -1; // track which image was used last
 
+// Preload all images to prevent lag on GitHub Pages
+images.forEach(src => {
+  const img = new Image();
+  img.src = src;
+});
+
 // Core spawn logic extracted
 function spawnPhoto(x, y, force = false) {
   if (!window.isHomeActive) return;
@@ -39,18 +45,18 @@ function spawnPhoto(x, y, force = false) {
 
   img.onload = () => {
     const isMobile = window.innerWidth < 900;
-    const baseScale = isMobile ? 0.8 : 0.3; // Much larger on mobile
-    const randomFactor = isMobile ? 0.4 : 0.3;
+    // Increased sizes as requested
+    const baseScale = isMobile ? 1.0 : 0.6;
+    const randomFactor = isMobile ? 0.3 : 0.4;
     const scale = baseScale + Math.random() * randomFactor;
 
-    // On mobile, rely more on CSS max-width, but this sets a base 'natural' size
     if (isMobile) {
-      // Force width to be substantial but respect CSS max-width 95vw
-      img.style.width = `${Math.min(img.naturalWidth * scale, window.innerWidth * 0.9)}px`;
+      // Allow nearly full width on mobile
+      img.style.width = `${Math.min(img.naturalWidth * scale, window.innerWidth * 0.98)}px`;
     } else {
       img.style.width = `${img.naturalWidth * scale}px`;
     }
-    img.style.height = 'auto';
+    img.style.height = 'auto'; // Maintain aspect ratio
 
     img.style.left = `${x}px`;
     img.style.top = `${y}px`;
@@ -160,6 +166,12 @@ setInterval(() => {
   let activePlayer = v1;
   let nextPlayer = v2;
 
+  // Helper to make video visible only when playing
+  function makeVisible(player) {
+    player.classList.add('active'); // opacity 1
+    player.style.zIndex = '1';
+  }
+
   // Initialize
   // Set the ACTIVE player to the random start video immediately
   // Note: We use the current index for the start, then increment for next.
@@ -167,13 +179,17 @@ setInterval(() => {
 
   // Try to play active immediately
   activePlayer.play().then(() => {
-    // Preload next
+    // It played! Make it visible.
+    makeVisible(activePlayer);
     prepareNextVideo();
   }).catch(err => {
     console.warn("Autoplay failed, waiting for interaction", err);
+    // It failed. Do NOT make visible yet.
+
     // Silent fallback: start on first touch/click
     const startOnInteraction = () => {
       activePlayer.play().then(() => {
+        makeVisible(activePlayer);
         prepareNextVideo();
       });
       document.removeEventListener('click', startOnInteraction);
