@@ -300,7 +300,6 @@ setInterval(() => {
   v2.addEventListener('ended', () => {
     if (activePlayer === v2) swapVideo();
   });
-
   // Error handling: log but don't skip immediately (prevents premature cutoffs on buffering)
   const handleError = (e) => {
     if (activePlayer === v1 || activePlayer === v2) {
@@ -310,19 +309,5 @@ setInterval(() => {
   };
   v1.addEventListener('error', handleError);
   v2.addEventListener('error', handleError);
-
-  // Resume on stall (Network buffering handling)
-  const handleStall = () => {
-    // If network lags, browsers sometimes pause and don't resume automatically.
-    // We force a retry.
-    console.log("Video stalled/waiting, forcing resume...");
-    if (activePlayer.paused) {
-      activePlayer.play().catch(e => console.log("Resume failed", e));
-    }
-  };
-  v1.addEventListener('waiting', handleStall);
-  v1.addEventListener('stalled', handleStall);
-  v2.addEventListener('waiting', handleStall);
-  v2.addEventListener('stalled', handleStall);
 
 })();
