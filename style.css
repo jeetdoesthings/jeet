@@ -147,43 +147,66 @@ header {
 } */
 
 .logo-img {
-  height: 3.5rem;
-  /* Increased from 2.5rem */
+  height: 2.7rem;
+  /* Increased by ~20% for visibility vs minimalism */
   width: auto;
   filter: brightness(0) invert(1) drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
   /* Make it white + shadow */
 }
 
-/* Glassmorphic Button (Refined) */
+/* Minimalist Text-Only Button */
 #about-btn {
-  background: rgba(255, 255, 255, 0.1);
-  /* Subtle glass */
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  /* Crisp refined border */
-  color: white;
-  padding: 0.7rem 1.5rem;
-  /* Slightly smaller than original 0.8 / 1.5 */
-  border-radius: 100px;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  /* Refined text size */
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0.5rem 0;
+  /* Minimal padding */
   text-transform: uppercase;
-  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-  /* More subtle shadow */
+  cursor: pointer;
+  position: relative;
 }
 
 #about-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  /* Gentle lift */
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  transform: none;
+  /* No movement */
+  background: transparent;
+  box-shadow: none;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  /* Glow on text */
+}
+
+#about-btn.active {
+  color: #fff;
+  background: transparent;
+  transform: none;
+  border: none;
+  box-shadow: none;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Add a subtle underline for hover/active if desired, or keep it clean */
+#about-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 1px;
+  background-color: white;
+  transition: width 0.3s ease;
+}
+
+#about-btn:hover::after,
+#about-btn.active::after {
+  width: 100%;
 }
 
 
