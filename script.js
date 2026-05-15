@@ -193,7 +193,10 @@ setInterval(() => {
     'media/bg7.mp4',
     'media/bg8.mp4',
     'media/bg9.mp4',
-    'media/bg10.mp4'
+    'media/bg10.mp4',
+    'media/ball kick.mp4',
+    'media/book fall.mp4',
+    'media/run.mp4'
   ];
 
   // Random start index
