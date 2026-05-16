@@ -175,7 +175,7 @@ header {
   font-size: 0.9rem;
   font-weight: 500;
   letter-spacing: 0.05em;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
   cursor: pointer;
   position: relative;
   line-height: 1;
@@ -246,7 +246,6 @@ header {
   /* Start hidden, JS handles fade in */
   transform: translate(-50%, -50%) scale(0.8);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
 }
 
 /* Active state for photos (handled by JS usually, but here for reference) */
@@ -341,10 +340,7 @@ header {
   gap: 2rem;
   /* Removed heavy backdrop-filter to rely on video blur for smoothness,
      keeping light bg for legibility */
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
-  /* reduced from 10px for performance */
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.65);
   border-radius: 12px;
   /* Subtle rounding */
 }
@@ -451,11 +447,9 @@ header {
   border-radius: 50%;
   pointer-events: none;
   z-index: 99999;
-  mix-blend-mode: difference;
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               height 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               background 0.25s ease;
-  will-change: transform;
 }
 
 .cursor-dot.hovering {

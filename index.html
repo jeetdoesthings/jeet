@@ -25,11 +25,7 @@
   <meta property="twitter:title" content="Jeet Ghegade">
   <meta property="twitter:description" content="Photographer & Videographer based in India.">
   <meta property="twitter:image" content="https://jeetdoesthings.github.io/jeet/media/photo2.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"
-    rel="stylesheet">
+  <link rel="preload" href="media/poster.jpg" as="image">
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -37,14 +33,11 @@
   <!-- Custom Cursor (dot only, no ring) -->
   <div class="cursor-dot"></div>
 
-  <!--
-    Note: .mov files may not play in all browsers. For best compatibility provide
-    MP4 (H.264) and WebM (VP9/AV1) sources. `playsinline`  <!-- Dynamic Background Video (Double Buffering) -->
   <div id="video-container">
-    <video autoplay muted playsinline preload="auto" id="bg-video-1" class="bg-video" poster="media/poster.jpg">
+    <video autoplay muted playsinline preload="metadata" id="bg-video-1" class="bg-video" poster="media/poster.jpg">
       <source src="media/bg1.mp4" type="video/mp4">
     </video>
-    <video muted playsinline preload="auto" id="bg-video-2" class="bg-video" poster="media/poster.jpg">
+    <video muted playsinline preload="metadata" id="bg-video-2" class="bg-video" poster="media/poster.jpg">
       <!-- Preload source will be set by JS -->
     </video>
   </div>
@@ -69,7 +62,7 @@
     <main class="about-container">
       <div class="about-split">
         <div class="about-image">
-          <img src="media/2525b342-2403-441c-97a0-71e9828b5a49.jpg" alt="Jeet Portrait">
+          <img data-src="media/2525b342-2403-441c-97a0-71e9828b5a49.jpg" alt="Jeet Portrait">
         </div>
         <div class="about-text">
           <div class="about-section">
@@ -153,7 +146,7 @@
   </div>
 
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
 </body>
 
 </html>
