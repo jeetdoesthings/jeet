@@ -431,3 +431,41 @@ header {
 .social-icons a:hover {
   color: #fff;
 }
+
+/* ─── Custom Cursor ─── */
+
+/* Hide default cursor on desktop */
+@media (min-width: 768px) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+}
+
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: difference;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.25s ease;
+  will-change: transform;
+}
+
+.cursor-dot.hovering {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Hide on mobile / touch */
+@media (max-width: 767px) {
+  .cursor-dot { display: none !important; }
+}

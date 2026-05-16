@@ -314,3 +314,56 @@ setInterval(() => {
   v2.addEventListener('error', handleError);
 
 })();
+
+/* ─── Custom Cursor (dot only) ─── */
+(() => {
+  // Skip on touch devices
+  if ("ontouchstart" in window || navigator.maxTouchPoints > 0) return;
+  // Skip on narrow screens
+  if (window.innerWidth < 768) return;
+
+  const dot = document.querySelector('.cursor-dot');
+  if (!dot) return;
+
+  let mouseX = 0, mouseY = 0;
+  let dotX = 0, dotY = 0;
+  let isHovering = false;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  }, { passive: true });
+
+  document.addEventListener('mouseover', (e) => {
+    const t = e.target;
+    if (
+      t.tagName === 'A' || t.tagName === 'BUTTON' ||
+      t.closest('a') || t.closest('button') ||
+      t.closest('[data-cursor-hover]')
+    ) {
+      isHovering = true;
+      dot.classList.add('hovering');
+    }
+  }, { passive: true });
+
+  document.addEventListener('mouseout', (e) => {
+    const t = e.target;
+    if (
+      t.tagName === 'A' || t.tagName === 'BUTTON' ||
+      t.closest('a') || t.closest('button') ||
+      t.closest('[data-cursor-hover]')
+    ) {
+      isHovering = false;
+      dot.classList.remove('hovering');
+    }
+  }, { passive: true });
+
+  (function animate() {
+    // Lerp — dot follows closely
+    dotX += (mouseX - dotX) * 0.15;
+    dotY += (mouseY - dotY) * 0.15;
+    const offset = isHovering ? 24 : 4;
+    dot.style.transform = `translate(${dotX - offset}px, ${dotY - offset}px)`;
+    requestAnimationFrame(animate);
+  })();
+})();
