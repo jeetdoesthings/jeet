@@ -2,42 +2,25 @@ const photoContainer = document.getElementById('photo-container');
 
 const images = ["media/0427B47D-D99E-4A43-9842-DCC152A46125.JPG", "media/IMG-4091.JPG", "media/IMG-4094.JPG", "media/IMG_0028.JPG", "media/IMG_0061 2.JPG", "media/IMG_0072.JPG", "media/IMG_0155.JPG", "media/IMG_0156.JPG", "media/IMG_0157.JPG", "media/IMG_0158.JPG", "media/IMG_0159.JPG", "media/IMG_0160.JPG", "media/IMG_0161.JPG", "media/IMG_0162.JPG", "media/IMG_0164.JPG", "media/IMG_0165.JPG", "media/IMG_0296.JPG", "media/IMG_0340.JPG", "media/IMG_0354.JPG", "media/IMG_0434.JPG", "media/IMG_0852.jpg", "media/IMG_1155.JPG", "media/IMG_1202.JPG", "media/IMG_1458.jpg", "media/IMG_1498.JPG", "media/IMG_1545.JPG", "media/IMG_1549.JPG", "media/IMG_1569.JPG", "media/IMG_1580.JPG", "media/IMG_1587.JPG", "media/IMG_1589.JPG", "media/IMG_1602.JPG", "media/IMG_1614.JPG", "media/IMG_1624.JPG", "media/IMG_1626.JPG", "media/IMG_1877.JPG", "media/IMG_1901.JPG", "media/IMG_2031.JPG", "media/IMG_2076.jpg", "media/IMG_2092.JPG", "media/IMG_2153.JPG", "media/IMG_2155.jpg", "media/IMG_2379.JPG", "media/IMG_2401.jpg", "media/IMG_2483_1.JPG", "media/IMG_2500.JPG", "media/IMG_2509.JPG", "media/IMG_2704.JPG", "media/IMG_2708.JPG", "media/IMG_2788.JPG", "media/IMG_2789.JPG", "media/IMG_2919.JPG", "media/IMG_2920.JPG", "media/IMG_3047.JPG", "media/IMG_3241.JPG", "media/IMG_3246.JPG", "media/IMG_3249.JPG", "media/IMG_3348.JPG", "media/IMG_3846.JPG", "media/IMG_4082.JPG", "media/IMG_4150.JPG", "media/IMG_4197.JPG", "media/IMG_4198.JPG", "media/IMG_4200.JPG", "media/IMG_4233.JPG", "media/IMG_4246.JPG", "media/IMG_4349.jpg", "media/IMG_4352.jpg", "media/IMG_4757 2.JPG", "media/IMG_4786.jpg", "media/IMG_6410.JPG", "media/IMG_6462.jpg", "media/IMG_6503.jpg", "media/IMG_6742.jpg", "media/IMG_6935.JPG", "media/IMG_6936.JPG", "media/IMG_6938.JPG", "media/IMG_6939.JPG", "media/IMG_6940.JPG", "media/IMG_6941.JPG", "media/IMG_7099.jpg", "media/IMG_7103.jpg", "media/IMG_7151.jpg", "media/IMG_7154.jpg", "media/IMG_8022.JPG", "media/IMG_8038.JPG", "media/IMG_8851.jpg", "media/IMG_9192.jpg", "media/IMG_9548.jpg", "media/IMG_9992.JPG", "media/IMG_9993.JPG", "media/IMG_9994.JPG", "media/IMG_9995.JPG", "media/IMG_9997.JPG", "media/IMG_9998.JPG", "media/IMG_9999.JPG", "media/photo.jpg", "media/photo1.jpg", "media/photo2.jpg", "media/photo3.jpg", "media/photo4.jpg", "media/photo5.jpg", "media/photo6.jpg", "media/photo7.jpg", "media/photo8.jpg"];
 
-const CACHE_MAX = 16;
-const WARM_COUNT = 5;
 const MAX_PHOTOS = 10;
 const POINTER_THROTTLE_MS = window.matchMedia('(max-width: 899px)').matches ? 80 : 50;
-// LRU image cache — avoids loading all 105 images on first visit
-const imageCache = new Map();
+const PRELOAD_STAGGER_MS = 40;
 
-function touchCache(src) {
-  if (imageCache.has(src)) {
-    const entry = imageCache.get(src);
-    imageCache.delete(src);
-    imageCache.set(src, entry);
-    return entry;
-  }
-  return null;
-}
+// Cache all gallery images once loaded (no eviction — full random pool)
+const imageCache = new Map();
+const preloadPromises = new Map();
 
 function setCache(src, img) {
-  if (imageCache.has(src)) imageCache.delete(src);
   imageCache.set(src, img);
-  while (imageCache.size > CACHE_MAX) {
-    const oldest = imageCache.keys().next().value;
-    imageCache.delete(oldest);
-  }
 }
 
 function preloadImage(src) {
-  const existing = touchCache(src);
-  if (existing) {
-    if (existing.complete) return Promise.resolve(existing);
-    return new Promise((resolve, reject) => {
-      existing.addEventListener('load', () => resolve(existing), { once: true });
-      existing.addEventListener('error', reject, { once: true });
-    });
-  }
-  return new Promise((resolve, reject) => {
+  const cached = imageCache.get(src);
+  if (cached && cached.complete) return Promise.resolve(cached);
+
+  if (preloadPromises.has(src)) return preloadPromises.get(src);
+
+  const promise = new Promise((resolve, reject) => {
     const img = new Image();
     img.decoding = 'async';
     img.onload = () => {
@@ -46,32 +29,25 @@ function preloadImage(src) {
     };
     img.onerror = reject;
     img.src = src;
-  });
+  }).finally(() => preloadPromises.delete(src));
+
+  preloadPromises.set(src, promise);
+  return promise;
 }
 
-function warmRandomImages(count) {
-  const indices = new Set();
-  while (indices.size < Math.min(count, images.length)) {
-    indices.add(Math.floor(Math.random() * images.length));
+let allImagesPreloading = false;
+
+function preloadAllGalleryImages() {
+  if (allImagesPreloading) return;
+  allImagesPreloading = true;
+  const order = images.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
   }
-  indices.forEach((i) => preloadImage(images[i]).catch(() => {}));
-}
-
-function getCachedIndices() {
-  const indices = [];
-  images.forEach((src, i) => {
-    const entry = imageCache.get(src);
-    if (entry && entry.complete) indices.push(i);
+  order.forEach((idx, i) => {
+    setTimeout(() => preloadImage(images[idx]).catch(() => {}), i * PRELOAD_STAGGER_MS);
   });
-  return indices;
-}
-
-let cacheWarmed = false;
-
-function warmCacheOnInteraction() {
-  if (cacheWarmed) return;
-  cacheWarmed = true;
-  warmRandomImages(WARM_COUNT);
 }
 
 let lastX = 0;
@@ -118,18 +94,10 @@ function enforcePhotoCap() {
 }
 
 function pickImageIndex() {
-  const cached = getCachedIndices();
-  const pool = cached.length > 0 ? cached : null;
   let index;
-  let attempts = 0;
   do {
-    if (pool && Math.random() < 0.7) {
-      index = pool[Math.floor(Math.random() * pool.length)];
-    } else {
-      index = Math.floor(Math.random() * images.length);
-    }
-    attempts++;
-  } while (index === lastImageIndex && images.length > 1 && attempts < 8);
+    index = Math.floor(Math.random() * images.length);
+  } while (index === lastImageIndex && images.length > 1);
   return index;
 }
 
@@ -182,7 +150,7 @@ function layoutAndShowPhoto(img, x, y) {
 function spawnPhoto(x, y, force = false) {
   if (!window.isHomeActive) return;
 
-  warmCacheOnInteraction();
+  preloadAllGalleryImages();
 
   const dx = x - lastX;
   const dy = y - lastY;
@@ -267,7 +235,7 @@ document.addEventListener('touchstart', (e) => {
   const touch = e.touches[0];
   lastX = touch.pageX;
   lastY = touch.pageY;
-  warmCacheOnInteraction();
+  preloadAllGalleryImages();
   spawnPhoto(touch.pageX, touch.pageY, true);
 }, { passive: true });
 
@@ -275,6 +243,10 @@ document.addEventListener('touchmove', (e) => {
   const touch = e.touches[0];
   onPointerMove(touch.pageX, touch.pageY);
 }, { passive: true });
+
+window.addEventListener('load', () => {
+  setTimeout(preloadAllGalleryImages, 800);
+});
 
 function loadAboutPortrait() {
   const portrait = document.querySelector('.about-image img[data-src]');
@@ -284,8 +256,9 @@ function loadAboutPortrait() {
 
 /* Background video + SPA */
 (() => {
-  const v1Check = document.getElementById('bg-video-1');
-  if (!v1Check) return;
+  const v1 = document.getElementById('bg-video-1');
+  const v2 = document.getElementById('bg-video-2');
+  if (!v1 || !v2) return;
 
   const videoSources = [
     'media/bg1.mp4',
@@ -300,60 +273,179 @@ function loadAboutPortrait() {
     'media/bg10.mp4'
   ];
 
-  let currentVideoIndex = Math.floor(Math.random() * videoSources.length);
-
-  function getNextSource() {
-    currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
-    return videoSources[currentVideoIndex];
-  }
-
-  const v1 = document.getElementById('bg-video-1');
-  const v2 = document.getElementById('bg-video-2');
+  let activeSourceIndex = Math.floor(Math.random() * videoSources.length);
   let activePlayer = v1;
-  let nextPlayer = v2;
+  let standbyPlayer = v2;
+  let isSwapping = false;
+  let preparingStandby = false;
+  let videosPausedForAbout = false;
 
-  function pauseVideos() {
-    v1.pause();
-    v2.pause();
-    nextPlayer.removeAttribute('src');
-    nextPlayer.load();
+  function sourceAt(offset) {
+    const idx = (activeSourceIndex + offset + videoSources.length) % videoSources.length;
+    return videoSources[idx];
   }
 
-  function resumeVideos() {
-    activePlayer.play().then(() => {
-      makeVisible(activePlayer);
-      prepareNextVideo();
-    }).catch(() => {});
+  function configurePlayer(player) {
+    player.muted = true;
+    player.defaultMuted = true;
+    player.playsInline = true;
+    player.setAttribute('playsinline', '');
+    player.setAttribute('muted', '');
+    player.setAttribute('preload', 'auto');
   }
 
-  function makeVisible(player) {
+  function hidePlayer(player) {
+    player.classList.remove('active');
+    player.style.zIndex = '0';
+  }
+
+  function showPlayer(player) {
     player.classList.add('active');
     player.style.zIndex = '1';
   }
 
-  function prepareNextVideo() {
-    if (!window.isHomeActive) return;
-    const nextSrc = getNextSource();
-    nextPlayer.src = nextSrc;
-    nextPlayer.load();
-    nextPlayer.style.zIndex = '0';
-    nextPlayer.classList.remove('active');
+  function resetPlayer(player) {
+    player.pause();
+    player.classList.remove('active');
+    player.style.zIndex = '0';
+    player.currentTime = 0;
   }
 
-  function swapVideo() {
-    if (!window.isHomeActive) return;
-    nextPlayer.play().then(() => {
-      nextPlayer.classList.add('active');
-      nextPlayer.style.zIndex = '1';
-      activePlayer.classList.remove('active');
-      activePlayer.style.zIndex = '0';
-      const temp = activePlayer;
-      activePlayer = nextPlayer;
-      nextPlayer = temp;
-      prepareNextVideo();
-    }).catch(() => {
-      setTimeout(swapVideo, 500);
+  function waitUntilReady(player, timeoutMs = 15000) {
+    if (player.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        cleanup();
+        if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) resolve();
+        else reject(new Error('video ready timeout'));
+      }, timeoutMs);
+
+      const onReady = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error('video load failed'));
+      };
+      const cleanup = () => {
+        clearTimeout(timer);
+        player.removeEventListener('canplaythrough', onReady);
+        player.removeEventListener('error', onError);
+      };
+      player.addEventListener('canplaythrough', onReady, { once: true });
+      player.addEventListener('error', onError, { once: true });
     });
+  }
+
+  function loadIntoPlayer(player, src) {
+    if (player.dataset.loadedSrc === src) return Promise.resolve();
+    player.dataset.loadedSrc = src;
+    player.src = src;
+    player.load();
+    return waitUntilReady(player);
+  }
+
+  async function prepareStandby() {
+    if (!window.isHomeActive || videosPausedForAbout || preparingStandby) return;
+    preparingStandby = true;
+    const nextSrc = sourceAt(1);
+    hidePlayer(standbyPlayer);
+    standbyPlayer.preload = 'auto';
+    try {
+      await loadIntoPlayer(standbyPlayer, nextSrc);
+    } catch (_) {
+      delete standbyPlayer.dataset.loadedSrc;
+    } finally {
+      preparingStandby = false;
+    }
+  }
+
+  async function startPlayback() {
+    configurePlayer(v1);
+    configurePlayer(v2);
+    v1.preload = 'auto';
+    v2.preload = 'metadata';
+
+    activeSourceIndex = Math.floor(Math.random() * videoSources.length);
+    activePlayer = v1;
+    standbyPlayer = v2;
+
+    try {
+      await loadIntoPlayer(activePlayer, sourceAt(0));
+      await activePlayer.play();
+      showPlayer(activePlayer);
+      await prepareStandby();
+    } catch (err) {
+      console.warn('Autoplay failed, waiting for interaction', err);
+      const startOnInteraction = async () => {
+        try {
+          await activePlayer.play();
+          showPlayer(activePlayer);
+          await prepareStandby();
+        } catch (_) {}
+        document.removeEventListener('click', startOnInteraction);
+        document.removeEventListener('touchstart', startOnInteraction);
+      };
+      document.addEventListener('click', startOnInteraction);
+      document.addEventListener('touchstart', startOnInteraction);
+    }
+  }
+
+  async function swapVideo() {
+    if (!window.isHomeActive || isSwapping || videosPausedForAbout) return;
+    isSwapping = true;
+
+    try {
+      await waitUntilReady(standbyPlayer);
+      standbyPlayer.currentTime = 0;
+      await standbyPlayer.play();
+
+      const outgoing = activePlayer;
+      activePlayer = standbyPlayer;
+      standbyPlayer = outgoing;
+      activeSourceIndex = (activeSourceIndex + 1) % videoSources.length;
+
+      showPlayer(activePlayer);
+      resetPlayer(standbyPlayer);
+      delete standbyPlayer.dataset.loadedSrc;
+
+      await prepareStandby();
+    } catch (err) {
+      console.warn('Video swap failed, retrying', err);
+      delete standbyPlayer.dataset.loadedSrc;
+      await prepareStandby();
+    } finally {
+      isSwapping = false;
+    }
+  }
+
+  function onActiveEnded(e) {
+    if (e.target !== activePlayer || isSwapping || !window.isHomeActive) return;
+    swapVideo();
+  }
+
+  function pauseVideos() {
+    videosPausedForAbout = true;
+    isSwapping = false;
+    v1.pause();
+    v2.pause();
+  }
+
+  async function resumeVideos() {
+    videosPausedForAbout = false;
+    if (!activePlayer.src) {
+      delete activePlayer.dataset.loadedSrc;
+      await startPlayback();
+      return;
+    }
+    try {
+      await activePlayer.play();
+      showPlayer(activePlayer);
+      await prepareStandby();
+    } catch (_) {}
   }
 
   window.showView = function (viewName) {
@@ -368,10 +460,6 @@ function loadAboutPortrait() {
       aboutView.classList.add('hidden');
       window.isHomeActive = true;
       if (aboutBtn) aboutBtn.classList.remove('active');
-      if (!activePlayer.src) {
-        activePlayer.src = videoSources[currentVideoIndex];
-        activePlayer.load();
-      }
       resumeVideos();
     } else if (viewName === 'about') {
       aboutView.classList.remove('hidden');
@@ -394,48 +482,17 @@ function loadAboutPortrait() {
     });
   }
 
-  activePlayer.src = videoSources[currentVideoIndex];
-  activePlayer.muted = true;
-  activePlayer.defaultMuted = true;
-  activePlayer.playsInline = true;
-  activePlayer.setAttribute('playsinline', '');
-  activePlayer.setAttribute('muted', '');
-  activePlayer.load();
+  v1.addEventListener('ended', onActiveEnded);
+  v2.addEventListener('ended', onActiveEnded);
 
-  const playPromise = activePlayer.play();
-  if (playPromise !== undefined) {
-    playPromise.then(() => {
-      makeVisible(activePlayer);
-      prepareNextVideo();
-    }).catch(() => {
-      const startOnInteraction = () => {
-        activePlayer.muted = true;
-        activePlayer.play().then(() => {
-          makeVisible(activePlayer);
-          prepareNextVideo();
-        });
-        document.removeEventListener('click', startOnInteraction);
-        document.removeEventListener('touchstart', startOnInteraction);
-      };
-      document.addEventListener('click', startOnInteraction);
-      document.addEventListener('touchstart', startOnInteraction);
-    });
-  }
-
-  v1.addEventListener('ended', () => {
-    if (activePlayer === v1) swapVideo();
-  });
-  v2.addEventListener('ended', () => {
-    if (activePlayer === v2) swapVideo();
-  });
-
-  const handleError = (e) => {
-    if (activePlayer === v1 || activePlayer === v2) {
-      console.warn('Error in active player (buffering or network):', e);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !window.isHomeActive || videosPausedForAbout) return;
+    if (activePlayer.paused) {
+      activePlayer.play().catch(() => {});
     }
-  };
-  v1.addEventListener('error', handleError);
-  v2.addEventListener('error', handleError);
+  });
+
+  startPlayback();
 })();
 
 /* Custom cursor — rAF only while pointer recently moved */
