@@ -290,105 +290,73 @@ function loadAboutPortrait() {
     player.defaultMuted = true;
     player.playsInline = true;
     player.setAttribute('playsinline', '');
+    player.setAttribute('webkit-playsinline', '');
     player.setAttribute('muted', '');
-    player.setAttribute('preload', 'auto');
-  }
-
-  function hidePlayer(player) {
-    player.classList.remove('active');
-    player.style.zIndex = '0';
   }
 
   function showPlayer(player) {
     player.classList.add('active');
-    player.style.zIndex = '1';
+  }
+
+  function hidePlayer(player) {
+    player.classList.remove('active');
   }
 
   function resetPlayer(player) {
     player.pause();
     player.classList.remove('active');
-    player.style.zIndex = '0';
-    player.currentTime = 0;
-  }
-
-  function waitUntilReady(player, timeoutMs = 15000) {
-    if (player.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
-      return Promise.resolve();
-    }
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        cleanup();
-        if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) resolve();
-        else reject(new Error('video ready timeout'));
-      }, timeoutMs);
-
-      const onReady = () => {
-        cleanup();
-        resolve();
-      };
-      const onError = () => {
-        cleanup();
-        reject(new Error('video load failed'));
-      };
-      const cleanup = () => {
-        clearTimeout(timer);
-        player.removeEventListener('canplaythrough', onReady);
-        player.removeEventListener('error', onError);
-      };
-      player.addEventListener('canplaythrough', onReady, { once: true });
-      player.addEventListener('error', onError, { once: true });
-    });
-  }
-
-  function loadIntoPlayer(player, src) {
-    if (player.dataset.loadedSrc === src) return Promise.resolve();
-    player.dataset.loadedSrc = src;
-    player.src = src;
+    try {
+      player.currentTime = 0;
+    } catch (_) {}
+    player.removeAttribute('src');
     player.load();
-    return waitUntilReady(player);
+    delete player.dataset.loadedSrc;
   }
 
   async function prepareStandby() {
     if (!window.isHomeActive || videosPausedForAbout || preparingStandby) return;
     preparingStandby = true;
     const nextSrc = sourceAt(1);
+    
     hidePlayer(standbyPlayer);
     standbyPlayer.preload = 'auto';
-    try {
-      await loadIntoPlayer(standbyPlayer, nextSrc);
-    } catch (_) {
-      delete standbyPlayer.dataset.loadedSrc;
-    } finally {
-      preparingStandby = false;
-    }
+    standbyPlayer.src = nextSrc;
+    standbyPlayer.dataset.loadedSrc = nextSrc;
+    standbyPlayer.load();
+    
+    preparingStandby = false;
   }
 
   async function startPlayback() {
     configurePlayer(v1);
     configurePlayer(v2);
-    v1.preload = 'auto';
-    v2.preload = 'metadata';
 
     activeSourceIndex = Math.floor(Math.random() * videoSources.length);
     activePlayer = v1;
     standbyPlayer = v2;
 
+    showPlayer(activePlayer);
+    activePlayer.preload = 'auto';
+    activePlayer.src = sourceAt(0);
+    activePlayer.dataset.loadedSrc = sourceAt(0);
+    activePlayer.load();
+
     try {
-      await loadIntoPlayer(activePlayer, sourceAt(0));
       await activePlayer.play();
-      showPlayer(activePlayer);
       await prepareStandby();
     } catch (err) {
-      console.warn('Autoplay failed, waiting for interaction', err);
+      console.warn('Autoplay failed, waiting for user interaction', err);
+      
       const startOnInteraction = async () => {
         try {
           await activePlayer.play();
-          showPlayer(activePlayer);
           await prepareStandby();
+          
+          document.removeEventListener('click', startOnInteraction);
+          document.removeEventListener('touchstart', startOnInteraction);
         } catch (_) {}
-        document.removeEventListener('click', startOnInteraction);
-        document.removeEventListener('touchstart', startOnInteraction);
       };
+      
       document.addEventListener('click', startOnInteraction);
       document.addEventListener('touchstart', startOnInteraction);
     }
@@ -399,8 +367,6 @@ function loadAboutPortrait() {
     isSwapping = true;
 
     try {
-      await waitUntilReady(standbyPlayer);
-      standbyPlayer.currentTime = 0;
       await standbyPlayer.play();
 
       const outgoing = activePlayer;
@@ -410,13 +376,13 @@ function loadAboutPortrait() {
 
       showPlayer(activePlayer);
       resetPlayer(standbyPlayer);
-      delete standbyPlayer.dataset.loadedSrc;
+      prepareStandby();
 
-      await prepareStandby();
     } catch (err) {
       console.warn('Video swap failed, retrying', err);
-      delete standbyPlayer.dataset.loadedSrc;
-      await prepareStandby();
+      resetPlayer(standbyPlayer);
+      activeSourceIndex = (activeSourceIndex + 1) % videoSources.length;
+      prepareStandby();
     } finally {
       isSwapping = false;
     }
@@ -437,7 +403,6 @@ function loadAboutPortrait() {
   async function resumeVideos() {
     videosPausedForAbout = false;
     if (!activePlayer.src) {
-      delete activePlayer.dataset.loadedSrc;
       await startPlayback();
       return;
     }
