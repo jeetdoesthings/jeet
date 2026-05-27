@@ -331,15 +331,24 @@ function loadAboutPortrait() {
     configurePlayer(v1);
     configurePlayer(v2);
 
-    activeSourceIndex = Math.floor(Math.random() * videoSources.length);
     activePlayer = v1;
     standbyPlayer = v2;
 
     showPlayer(activePlayer);
-    activePlayer.preload = 'auto';
-    activePlayer.src = sourceAt(0);
-    activePlayer.dataset.loadedSrc = sourceAt(0);
-    activePlayer.load();
+
+    // If the activePlayer already has a src (from HTML), we use it to allow native browser autoplay
+    if (!activePlayer.getAttribute('src')) {
+      activeSourceIndex = Math.floor(Math.random() * videoSources.length);
+      activePlayer.preload = 'auto';
+      activePlayer.src = sourceAt(0);
+      activePlayer.dataset.loadedSrc = sourceAt(0);
+      activePlayer.load();
+    } else {
+      const currentSrc = activePlayer.getAttribute('src');
+      const foundIndex = videoSources.findIndex(src => currentSrc.includes(src));
+      activeSourceIndex = foundIndex !== -1 ? foundIndex : 0;
+      activePlayer.dataset.loadedSrc = currentSrc;
+    }
 
     try {
       await activePlayer.play();
