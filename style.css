@@ -54,18 +54,11 @@ html {
 }
 
 #about-btn.active {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: #fff;
 }
 
 #about-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  /* Gentle lift */
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: #fff;
 }
 
 #about-view.active {
@@ -97,11 +90,13 @@ html {
   opacity: 0;
   /* Hidden by default */
   z-index: 0;
+  will-change: opacity;
+  transform: translateZ(0); /* Force GPU compositing */
 }
 
 .bg-video.active {
   opacity: 1;
-  /* Visible */
+  transition: opacity 0.8s ease;
   /* z-index is managed by JS for crossfading */
 }
 
@@ -173,7 +168,7 @@ header {
   text-transform: uppercase;
   font-family: var(--font-body);
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.05em;
   transition: color 0.3s ease, text-shadow 0.3s ease;
   cursor: pointer;
@@ -187,11 +182,8 @@ header {
 #about-btn:hover {
   color: #fff;
   transform: none;
-  /* No movement */
   background: transparent;
   box-shadow: none;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  /* Glow on text */
 }
 
 #about-btn.active {
@@ -200,7 +192,6 @@ header {
   transform: none;
   border: none;
   box-shadow: none;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
 /* Add a subtle underline for hover/active if desired, or keep it clean */
@@ -231,6 +222,7 @@ header {
   height: 100%;
   pointer-events: none;
   z-index: 10;
+  contain: layout style;
 }
 
 /* Photos */
@@ -239,9 +231,8 @@ header {
   max-width: 25vw;
   max-height: 40vh;
   /* object-fit: cover; Removed to prevent cropping */
-  border-radius: 4px;
-  /* Slight rounding */
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border-radius: 0;
+  box-shadow: none;
   opacity: 0;
   /* Start hidden, JS handles fade in */
   transform: translate(-50%, -50%) scale(0.8);
@@ -341,14 +332,13 @@ header {
   /* Removed heavy backdrop-filter to rely on video blur for smoothness,
      keeping light bg for legibility */
   background: rgba(0, 0, 0, 0.65);
-  border-radius: 12px;
-  /* Subtle rounding */
+  border-radius: 0;
 }
 
 .about-section h2 {
   font-family: var(--font-heading);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-bottom: 1rem;
@@ -358,7 +348,7 @@ header {
 .about-section h3 {
   font-family: var(--font-heading);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 0.5rem;

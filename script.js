@@ -2,9 +2,10 @@ const photoContainer = document.getElementById('photo-container');
 
 const images = ["media/0427B47D-D99E-4A43-9842-DCC152A46125.JPG", "media/IMG-4091.JPG", "media/IMG-4094.JPG", "media/IMG_0028.JPG", "media/IMG_0061 2.JPG", "media/IMG_0072.JPG", "media/IMG_0155.JPG", "media/IMG_0156.JPG", "media/IMG_0157.JPG", "media/IMG_0158.JPG", "media/IMG_0159.JPG", "media/IMG_0160.JPG", "media/IMG_0161.JPG", "media/IMG_0162.JPG", "media/IMG_0164.JPG", "media/IMG_0165.JPG", "media/IMG_0296.JPG", "media/IMG_0340.JPG", "media/IMG_0354.JPG", "media/IMG_0434.JPG", "media/IMG_0852.jpg", "media/IMG_1155.JPG", "media/IMG_1202.JPG", "media/IMG_1458.jpg", "media/IMG_1498.JPG", "media/IMG_1545.JPG", "media/IMG_1549.JPG", "media/IMG_1569.JPG", "media/IMG_1580.JPG", "media/IMG_1587.JPG", "media/IMG_1589.JPG", "media/IMG_1602.JPG", "media/IMG_1614.JPG", "media/IMG_1624.JPG", "media/IMG_1626.JPG", "media/IMG_1877.JPG", "media/IMG_1901.JPG", "media/IMG_2031.JPG", "media/IMG_2076.jpg", "media/IMG_2092.JPG", "media/IMG_2153.JPG", "media/IMG_2155.jpg", "media/IMG_2379.JPG", "media/IMG_2401.jpg", "media/IMG_2483_1.JPG", "media/IMG_2500.JPG", "media/IMG_2509.JPG", "media/IMG_2704.JPG", "media/IMG_2708.JPG", "media/IMG_2788.JPG", "media/IMG_2789.JPG", "media/IMG_2919.JPG", "media/IMG_2920.JPG", "media/IMG_3047.JPG", "media/IMG_3241.JPG", "media/IMG_3246.JPG", "media/IMG_3249.JPG", "media/IMG_3348.JPG", "media/IMG_3846.JPG", "media/IMG_4082.JPG", "media/IMG_4150.JPG", "media/IMG_4197.JPG", "media/IMG_4198.JPG", "media/IMG_4200.JPG", "media/IMG_4233.JPG", "media/IMG_4246.JPG", "media/IMG_4349.jpg", "media/IMG_4352.jpg", "media/IMG_4757 2.JPG", "media/IMG_4786.jpg", "media/IMG_6410.JPG", "media/IMG_6462.jpg", "media/IMG_6503.jpg", "media/IMG_6742.jpg", "media/IMG_6935.JPG", "media/IMG_6936.JPG", "media/IMG_6938.JPG", "media/IMG_6939.JPG", "media/IMG_6940.JPG", "media/IMG_6941.JPG", "media/IMG_7099.jpg", "media/IMG_7103.jpg", "media/IMG_7151.jpg", "media/IMG_7154.jpg", "media/IMG_8022.JPG", "media/IMG_8038.JPG", "media/IMG_8851.jpg", "media/IMG_9192.jpg", "media/IMG_9548.jpg", "media/IMG_9992.JPG", "media/IMG_9993.JPG", "media/IMG_9994.JPG", "media/IMG_9995.JPG", "media/IMG_9997.JPG", "media/IMG_9998.JPG", "media/IMG_9999.JPG", "media/photo.jpg", "media/photo1.jpg", "media/photo2.jpg", "media/photo3.jpg", "media/photo4.jpg", "media/photo5.jpg", "media/photo6.jpg", "media/photo7.jpg", "media/photo8.jpg"];
 
-const MAX_PHOTOS = 10;
-const POINTER_THROTTLE_MS = window.matchMedia('(max-width: 899px)').matches ? 80 : 50;
-const PRELOAD_STAGGER_MS = 40;
+const MAX_PHOTOS = 8;
+const POINTER_THROTTLE_MS = window.matchMedia('(max-width: 899px)').matches ? 120 : 70;
+const PRELOAD_BATCH_SIZE = 6;
+const PRELOAD_BATCH_DELAY_MS = 200;
 
 // Cache all gallery images once loaded (no eviction — full random pool)
 const imageCache = new Map();
@@ -45,9 +46,26 @@ function preloadAllGalleryImages() {
     const j = Math.floor(Math.random() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
-  order.forEach((idx, i) => {
-    setTimeout(() => preloadImage(images[idx]).catch(() => {}), i * PRELOAD_STAGGER_MS);
-  });
+  // Batch preload in chunks to avoid saturating the network/main thread
+  let batchIndex = 0;
+  function loadNextBatch() {
+    const start = batchIndex * PRELOAD_BATCH_SIZE;
+    const end = Math.min(start + PRELOAD_BATCH_SIZE, order.length);
+    if (start >= order.length) return;
+    for (let i = start; i < end; i++) {
+      preloadImage(images[order[i]]).catch(() => {});
+    }
+    batchIndex++;
+    if (end < order.length) {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(() => setTimeout(loadNextBatch, PRELOAD_BATCH_DELAY_MS));
+      } else {
+        setTimeout(loadNextBatch, PRELOAD_BATCH_DELAY_MS);
+      }
+    }
+  }
+  // Delay initial batch to let page settle
+  setTimeout(loadNextBatch, 300);
 }
 
 let lastX = 0;
@@ -70,10 +88,12 @@ function scheduleIdleCleanup() {
   if (idleCleanupTimer) clearTimeout(idleCleanupTimer);
   idleCleanupTimer = setTimeout(() => {
     if (Date.now() - lastMoveTime < 500) return;
-    photoContainer.querySelectorAll('.photo').forEach((img) => {
+    const photos = photoContainer.querySelectorAll('.photo');
+    photos.forEach((img) => {
       if (img !== lastSpawned) {
         img.style.opacity = '0';
-        setTimeout(() => img.remove(), 400);
+        img.style.willChange = 'auto';
+        setTimeout(() => { try { img.remove(); } catch(_) {} }, 400);
       }
     });
   }, 500);
@@ -134,6 +154,7 @@ function layoutAndShowPhoto(img, x, y) {
   img.style.top = `${y}px`;
   img.style.transform = 'translate(-50%, -50%) scale(0.8)';
   img.style.opacity = '0';
+  img.style.willChange = 'transform, opacity';
   img.style.zIndex = String(Date.now());
 
   photoContainer.appendChild(img);
@@ -144,11 +165,21 @@ function layoutAndShowPhoto(img, x, y) {
     img.classList.add('visible');
     img.style.transform = 'translate(-50%, -50%) scale(1)';
     img.style.opacity = '1';
+    // Release will-change after transition to free GPU memory
+    setTimeout(() => { img.style.willChange = 'auto'; }, 600);
   });
 }
 
 function spawnPhoto(x, y, force = false) {
   if (!window.isHomeActive) return;
+
+  // Sanitize coordinates (ensure they are finite numbers within safe viewport boundaries)
+  x = Number(x);
+  y = Number(y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+  
+  const maxSafeCoordinate = 30000; // safe upper bound for scrolling/viewport dimensions
+  if (Math.abs(x) > maxSafeCoordinate || Math.abs(y) > maxSafeCoordinate) return;
 
   preloadAllGalleryImages();
 
@@ -245,7 +276,7 @@ document.addEventListener('touchmove', (e) => {
 }, { passive: true });
 
 window.addEventListener('load', () => {
-  setTimeout(preloadAllGalleryImages, 800);
+  setTimeout(preloadAllGalleryImages, 1500);
 });
 
 function loadAboutPortrait() {
@@ -278,7 +309,6 @@ function loadAboutPortrait() {
   let standbyPlayer = v2;
   let isSwapping = false;
   let preparingStandby = false;
-  let videosPausedForAbout = false;
 
   function sourceAt(offset) {
     const idx = (activeSourceIndex + offset + videoSources.length) % videoSources.length;
@@ -314,7 +344,7 @@ function loadAboutPortrait() {
   }
 
   async function prepareStandby() {
-    if (!window.isHomeActive || videosPausedForAbout || preparingStandby) return;
+    if (preparingStandby) return;
     preparingStandby = true;
     const nextSrc = sourceAt(1);
     
@@ -358,24 +388,32 @@ function loadAboutPortrait() {
       
       const startOnInteraction = async () => {
         try {
+          // Re-ensure muted (some mobile browsers reset this)
+          activePlayer.muted = true;
+          activePlayer.setAttribute('muted', '');
           await activePlayer.play();
           await prepareStandby();
           
           document.removeEventListener('click', startOnInteraction);
           document.removeEventListener('touchstart', startOnInteraction);
+          document.removeEventListener('touchend', startOnInteraction);
+          document.removeEventListener('scroll', startOnInteraction);
         } catch (_) {}
       };
       
       document.addEventListener('click', startOnInteraction);
       document.addEventListener('touchstart', startOnInteraction);
+      document.addEventListener('touchend', startOnInteraction);
+      document.addEventListener('scroll', startOnInteraction, { once: true });
     }
   }
 
   async function swapVideo() {
-    if (!window.isHomeActive || isSwapping || videosPausedForAbout) return;
+    if (isSwapping) return;
     isSwapping = true;
 
     try {
+      standbyPlayer.muted = true;
       await standbyPlayer.play();
 
       const outgoing = activePlayer;
@@ -398,29 +436,11 @@ function loadAboutPortrait() {
   }
 
   function onActiveEnded(e) {
-    if (e.target !== activePlayer || isSwapping || !window.isHomeActive) return;
+    if (e.target !== activePlayer || isSwapping) return;
     swapVideo();
   }
 
-  function pauseVideos() {
-    videosPausedForAbout = true;
-    isSwapping = false;
-    v1.pause();
-    v2.pause();
-  }
-
-  async function resumeVideos() {
-    videosPausedForAbout = false;
-    if (!activePlayer.src) {
-      await startPlayback();
-      return;
-    }
-    try {
-      await activePlayer.play();
-      showPlayer(activePlayer);
-      await prepareStandby();
-    } catch (_) {}
-  }
+  // Videos now keep playing across all views — no pause/resume needed
 
   window.showView = function (viewName) {
     const homeView = document.getElementById('home-view');
@@ -434,7 +454,6 @@ function loadAboutPortrait() {
       aboutView.classList.add('hidden');
       window.isHomeActive = true;
       if (aboutBtn) aboutBtn.classList.remove('active');
-      resumeVideos();
     } else if (viewName === 'about') {
       aboutView.classList.remove('hidden');
       aboutView.classList.add('active');
@@ -443,7 +462,6 @@ function loadAboutPortrait() {
       window.isHomeActive = false;
       if (aboutBtn) aboutBtn.classList.add('active');
       clearHomePhotos();
-      pauseVideos();
       loadAboutPortrait();
     }
   };
@@ -460,8 +478,9 @@ function loadAboutPortrait() {
   v2.addEventListener('ended', onActiveEnded);
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden || !window.isHomeActive || videosPausedForAbout) return;
+    if (document.hidden) return;
     if (activePlayer.paused) {
+      activePlayer.muted = true;
       activePlayer.play().catch(() => {});
     }
   });
