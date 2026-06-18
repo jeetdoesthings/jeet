@@ -276,7 +276,11 @@ document.addEventListener('touchmove', (e) => {
 }, { passive: true });
 
 window.addEventListener('load', () => {
-  setTimeout(preloadAllGalleryImages, 1500);
+  setTimeout(preloadAllGalleryImages, 800);
+  const copyrightYear = document.getElementById('copyright-year');
+  if (copyrightYear) {
+    copyrightYear.textContent = new Date().getFullYear();
+  }
 });
 
 function loadAboutPortrait() {
