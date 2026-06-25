@@ -275,12 +275,14 @@ document.addEventListener('touchmove', (e) => {
   onPointerMove(touch.pageX, touch.pageY);
 }, { passive: true });
 
+// Set copyright year immediately (script is loaded at the bottom of body, so DOM is parsed)
+const copyrightYear = document.getElementById('copyright-year');
+if (copyrightYear) {
+  copyrightYear.textContent = new Date().getFullYear();
+}
+
 window.addEventListener('load', () => {
   setTimeout(preloadAllGalleryImages, 800);
-  const copyrightYear = document.getElementById('copyright-year');
-  if (copyrightYear) {
-    copyrightYear.textContent = new Date().getFullYear();
-  }
 });
 
 function loadAboutPortrait() {
